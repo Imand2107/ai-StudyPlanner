@@ -1,88 +1,96 @@
-// Firebase Configuration - Replace with your config
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
+// LocalStorage Database (works without Firebase)
+const DB_KEY = 'studyflow_db';
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+function getDB() {
+    const data = localStorage.getItem(DB_KEY);
+    return data ? JSON.parse(data) : { users: {}, subjects: {}, tasks: {}, sessions: {} };
+}
 
-// Database operations
+function saveDB(db) {
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
+}
+
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
+// Database operations (localStorage)
 const Database = {
-    // User operations
     async createUser(userId, data) {
-        return db.collection('users').doc(userId).set({
-            ...data,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        const db = getDB();
+        db.users[userId] = { ...data, createdAt: Date.now() };
+        saveDB(db);
     },
 
     async getUser(userId) {
-        const doc = await db.collection('users').doc(userId).get();
-        return doc.exists ? doc.data() : null;
+        const db = getDB();
+        return db.users[userId] || null;
     },
 
-    // Subject operations
     async addSubject(data) {
-        const ref = db.collection('subjects').doc();
-        await ref.set({ ...data, subjectId: ref.id, createdAt: Date.now() });
-        return ref.id;
+        const db = getDB();
+        const id = generateId();
+        db.subjects[id] = { ...data, subjectId: id, createdAt: Date.now() };
+        saveDB(db);
+        return id;
     },
 
     async getSubjects(userId) {
-        const snapshot = await db.collection('subjects')
-            .where('userId', '==', userId)
-            .get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const db = getDB();
+        return Object.values(db.subjects).filter(s => s.userId === userId);
     },
 
     async updateSubject(subjectId, data) {
-        return db.collection('subjects').doc(subjectId).update(data);
+        const db = getDB();
+        if (db.subjects[subjectId]) {
+            db.subjects[subjectId] = { ...db.subjects[subjectId], ...data };
+            saveDB(db);
+        }
     },
 
     async deleteSubject(subjectId) {
-        return db.collection('subjects').doc(subjectId).delete();
+        const db = getDB();
+        delete db.subjects[subjectId];
+        saveDB(db);
     },
 
-    // Task operations
     async addTask(data) {
-        const ref = db.collection('tasks').doc();
-        await ref.set({ ...data, taskId: ref.id, createdAt: Date.now() });
-        return ref.id;
+        const db = getDB();
+        const id = generateId();
+        db.tasks[id] = { ...data, taskId: id, createdAt: Date.now() };
+        saveDB(db);
+        return id;
     },
 
     async getTasks(userId) {
-        const snapshot = await db.collection('tasks')
-            .where('userId', '==', userId)
-            .get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const db = getDB();
+        return Object.values(db.tasks).filter(t => t.userId === userId);
     },
 
     async updateTask(taskId, data) {
-        return db.collection('tasks').doc(taskId).update(data);
+        const db = getDB();
+        if (db.tasks[taskId]) {
+            db.tasks[taskId] = { ...db.tasks[taskId], ...data };
+            saveDB(db);
+        }
     },
 
     async deleteTask(taskId) {
-        return db.collection('tasks').doc(taskId).delete();
+        const db = getDB();
+        delete db.tasks[taskId];
+        saveDB(db);
     },
 
-    // Study Session operations
     async addSession(data) {
-        const ref = db.collection('study_sessions').doc();
-        await ref.set({ ...data, sessionId: ref.id });
-        return ref.id;
+        const db = getDB();
+        const id = generateId();
+        db.sessions[id] = { ...data, sessionId: id };
+        saveDB(db);
+        return id;
     },
 
     async getSessions(userId) {
-        const snapshot = await db.collection('study_sessions')
-            .where('userId', '==', userId)
-            .get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const db = getDB();
+        return Object.values(db.sessions).filter(s => s.userId === userId);
     }
 };

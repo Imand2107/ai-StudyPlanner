@@ -1,4 +1,4 @@
-// Authentication module
+// Authentication module (localStorage-based)
 let currentUser = null;
 
 function showLogin() {
@@ -36,6 +36,15 @@ function showAuthLoader(show) {
     document.getElementById('auth-loader').classList.toggle('hidden', !show);
 }
 
+function getStoredUsers() {
+    const data = localStorage.getItem('studyflow_users');
+    return data ? JSON.parse(data) : {};
+}
+
+function saveStoredUsers(users) {
+    localStorage.setItem('studyflow_users', JSON.stringify(users));
+}
+
 async function login() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
@@ -46,17 +55,29 @@ async function login() {
     }
 
     showAuthLoader(true);
-    try {
-        const result = await auth.signInWithEmailAndPassword(email, password);
-        currentUser = result.user;
-        localStorage.setItem('studyflow_user', JSON.stringify({
-            uid: currentUser.uid,
-            email: currentUser.email
-        }));
-    } catch (error) {
-        showAuthError(getAuthErrorMessage(error.code));
+
+    // Simulate network delay
+    await new Promise(r => setTimeout(r, 500));
+
+    const users = getStoredUsers();
+    const user = users[email];
+
+    if (!user) {
+        showAuthError('No account found with this email');
+        showAuthLoader(false);
+        return;
     }
+
+    if (user.password !== password) {
+        showAuthError('Incorrect password');
+        showAuthLoader(false);
+        return;
+    }
+
+    currentUser = { uid: user.uid, email: user.email, name: user.name };
+    localStorage.setItem('studyflow_current_user', JSON.stringify(currentUser));
     showAuthLoader(false);
+    enterApp();
 }
 
 async function register() {
@@ -81,78 +102,75 @@ async function register() {
     }
 
     showAuthLoader(true);
-    try {
-        const result = await auth.createUserWithEmailAndPassword(email, password);
-        currentUser = result.user;
-        await Database.createUser(currentUser.uid, { name, email });
-        localStorage.setItem('studyflow_user', JSON.stringify({
-            uid: currentUser.uid,
-            email: currentUser.email,
-            name
-        }));
-    } catch (error) {
-        showAuthError(getAuthErrorMessage(error.code));
+    await new Promise(r => setTimeout(r, 500));
+
+    const users = getStoredUsers();
+
+    if (users[email]) {
+        showAuthError('An account with this email already exists');
+        showAuthLoader(false);
+        return;
     }
+
+    const uid = generateId();
+    users[email] = { uid, email, name, password };
+    saveStoredUsers(users);
+
+    await Database.createUser(uid, { name, email });
+
+    currentUser = { uid, email, name };
+    localStorage.setItem('studyflow_current_user', JSON.stringify(currentUser));
     showAuthLoader(false);
+    showToast('Account created successfully!', 'success');
+    enterApp();
 }
 
-async function resetPassword() {
+function resetPassword() {
     const email = document.getElementById('forgot-email').value.trim();
     if (!email) {
         showAuthError('Please enter your email');
         return;
     }
 
-    showAuthLoader(true);
-    try {
-        await auth.sendPasswordResetEmail(email);
-        showToast('Password reset email sent!', 'success');
-        showLogin();
-    } catch (error) {
-        showAuthError(getAuthErrorMessage(error.code));
+    const users = getStoredUsers();
+    if (!users[email]) {
+        showAuthError('No account found with this email');
+        return;
     }
-    showAuthLoader(false);
+
+    showToast('Password reset is not available in demo mode', 'info');
+    showLogin();
 }
 
 function logout() {
-    auth.signOut();
     currentUser = null;
-    localStorage.removeItem('studyflow_user');
+    localStorage.removeItem('studyflow_current_user');
     document.getElementById('auth-screen').classList.add('active');
     document.getElementById('app-screen').classList.remove('active');
 }
 
-function getAuthErrorMessage(code) {
-    const messages = {
-        'auth/user-not-found': 'No account found with this email',
-        'auth/wrong-password': 'Incorrect password',
-        'auth/email-already-in-use': 'An account with this email already exists',
-        'auth/invalid-email': 'Invalid email address',
-        'auth/weak-password': 'Password is too weak',
-        'auth/too-many-requests': 'Too many attempts. Please try again later',
-        'auth/network-request-failed': 'Network error. Check your connection'
-    };
-    return messages[code] || 'An error occurred. Please try again';
+function enterApp() {
+    document.getElementById('auth-screen').classList.remove('active');
+    document.getElementById('app-screen').classList.add('active');
+    document.getElementById('sidebar-user-name').textContent = currentUser.name || currentUser.email.split('@')[0];
+    document.getElementById('sidebar-user-email').textContent = currentUser.email;
+    navigateTo('dashboard');
 }
 
-// Listen for auth state changes
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        currentUser = user;
-        const userData = await Database.getUser(user.uid);
-        const userName = userData?.name || user.email.split('@')[0];
-
-        document.getElementById('auth-screen').classList.remove('active');
-        document.getElementById('app-screen').classList.add('active');
-        document.getElementById('sidebar-user-name').textContent = userName;
-        document.getElementById('sidebar-user-email').textContent = user.email;
-
-        localStorage.setItem('studyflow_user', JSON.stringify({
-            uid: user.uid,
-            email: user.email,
-            name: userName
-        }));
-
-        navigateTo('dashboard');
+// Check for existing session on load
+function checkAuth() {
+    const stored = localStorage.getItem('studyflow_current_user');
+    if (stored) {
+        try {
+            currentUser = JSON.parse(stored);
+            if (currentUser && currentUser.uid) {
+                enterApp();
+                return;
+            }
+        } catch (e) {}
     }
-});
+    document.getElementById('auth-screen').classList.add('active');
+}
+
+// Init auth on DOM ready
+document.addEventListener('DOMContentLoaded', checkAuth);
