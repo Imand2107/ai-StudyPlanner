@@ -357,6 +357,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Sidebar nav click delegation
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => navigateTo(item.dataset.page));
+    });
+
     // Close user menu on outside click
     document.addEventListener('click', (e) => {
         const menu = document.getElementById('user-menu');
