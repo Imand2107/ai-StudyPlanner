@@ -15,3 +15,6 @@ local.properties
 *.aab
 *.jks
 *.keystore
+node_modules/
+.vercel/
+web/.vercel/
