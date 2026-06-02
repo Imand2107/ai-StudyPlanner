@@ -152,8 +152,18 @@ function logout() {
 function enterApp() {
     document.getElementById('auth-screen').classList.remove('active');
     document.getElementById('app-screen').classList.add('active');
-    document.getElementById('sidebar-user-name').textContent = currentUser.name || currentUser.email.split('@')[0];
+
+    const name = currentUser.name || currentUser.email.split('@')[0];
+    const initial = name.charAt(0).toUpperCase();
+
+    document.getElementById('sidebar-user-name').textContent = name;
     document.getElementById('sidebar-user-email').textContent = currentUser.email;
+    document.getElementById('sidebar-avatar').textContent = initial;
+    document.getElementById('topbar-avatar').textContent = initial;
+    document.getElementById('menu-avatar').textContent = initial;
+    document.getElementById('menu-name').textContent = name;
+    document.getElementById('menu-email').textContent = currentUser.email;
+
     navigateTo('dashboard');
 }
 

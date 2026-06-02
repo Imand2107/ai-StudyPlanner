@@ -1,16 +1,9 @@
-// Main App – Premium StudyFlow
 let currentPage = 'dashboard';
 
-/* ============================================
-   NAVIGATION
-============================================ */
+/* NAVIGATION */
 function navigateTo(page, ...args) {
     currentPage = page;
     document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.page === page));
-    document.getElementById('page-title').textContent = {
-        dashboard: 'Dashboard', subjects: 'Subjects', tasks: 'Tasks',
-        schedule: 'AI Schedule', timer: 'Focus Zone', analytics: 'Analytics'
-    }[page] || 'Dashboard';
     renderPage(page, ...args);
     closeSidebar();
 }
@@ -29,25 +22,20 @@ async function renderPage(page, ...args) {
     }
 }
 
-/* ============================================
-   SIDEBAR
-============================================ */
+/* SIDEBAR */
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); }
 
-/* ============================================
-   DARK MODE
-============================================ */
+/* DARK MODE */
 function toggleDarkMode() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
     localStorage.setItem('studyflow_theme', isDark ? 'light' : 'dark');
-    document.getElementById('theme-icon').className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
 }
 
-/* ============================================
-   TOAST
-============================================ */
+/* TOAST */
 function showToast(msg, type = 'info') {
     const c = document.getElementById('toast-container');
     const t = document.createElement('div');
@@ -58,20 +46,15 @@ function showToast(msg, type = 'info') {
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(100px)'; setTimeout(() => t.remove(), 300); }, 3000);
 }
 
-/* ============================================
-   MODAL
-============================================ */
+/* MODAL */
 function showModal(title, content) {
     document.getElementById('modal-title').textContent = title;
     document.getElementById('modal-body').innerHTML = content;
     document.getElementById('modal').classList.remove('hidden');
 }
-
 function closeModal() { document.getElementById('modal').classList.add('hidden'); }
 
-/* ============================================
-   CONFETTI
-============================================ */
+/* CONFETTI */
 function fireConfetti() {
     const c = document.createElement('div');
     c.className = 'confetti-container';
@@ -91,9 +74,7 @@ function fireConfetti() {
     setTimeout(() => c.remove(), 4000);
 }
 
-/* ============================================
-   ANIMATED COUNTERS
-============================================ */
+/* ANIMATED COUNTERS */
 function animateCounters() {
     document.querySelectorAll('.stat-value').forEach(el => {
         const text = el.textContent;
@@ -112,9 +93,69 @@ function animateCounters() {
     });
 }
 
-/* ============================================
-   SUBJECT MODAL
-============================================ */
+/* USER MENU */
+function toggleUserMenu() {
+    document.getElementById('user-menu').classList.toggle('hidden');
+}
+
+/* GLOBAL SEARCH */
+function handleSearch(value) {
+    if (!value.trim()) return;
+    openCommandPalette(value.trim());
+}
+
+function handleCommand(value) {
+    const results = document.getElementById('command-results');
+    if (!value.trim()) {
+        results.innerHTML = getDefaultCommands();
+        return;
+    }
+    const q = value.toLowerCase();
+    const matchedSubjects = Pages.subjects.filter(s => s.subjectName.toLowerCase().includes(q));
+    const matchedTasks = Pages.tasks.filter(t => t.taskName.toLowerCase().includes(q));
+    let html = '';
+    matchedSubjects.forEach(s => {
+        html += `<div class="command-result" onclick="closeCommandPalette();navigateTo('subjects')"><i class="fas fa-book" style="color:${s.color || 'var(--primary)'}"></i><span>${s.subjectName}</span></div>`;
+    });
+    matchedTasks.forEach(t => {
+        html += `<div class="command-result" onclick="closeCommandPalette();navigateTo('tasks')"><i class="fas fa-check-circle"></i><span>${t.taskName}</span></div>`;
+    });
+    if (!html) html = '<div style="padding:16px;text-align:center;color:var(--text-3);font-size:13px">No results found</div>';
+    results.innerHTML = html;
+}
+
+function getDefaultCommands() {
+    return `
+        <div class="command-result" onclick="closeCommandPalette();navigateTo('dashboard')"><i class="fas fa-th-large"></i><span>Dashboard</span></div>
+        <div class="command-result" onclick="closeCommandPalette();navigateTo('subjects')"><i class="fas fa-book"></i><span>Subjects</span></div>
+        <div class="command-result" onclick="closeCommandPalette();navigateTo('tasks')"><i class="fas fa-check-circle"></i><span>Tasks</span></div>
+        <div class="command-result" onclick="closeCommandPalette();navigateTo('schedule')"><i class="fas fa-calendar-alt"></i><span>AI Schedule</span></div>
+        <div class="command-result" onclick="closeCommandPalette();navigateTo('timer')"><i class="fas fa-clock"></i><span>Focus Zone</span></div>
+        <div class="command-result" onclick="closeCommandPalette();navigateTo('analytics')"><i class="fas fa-chart-bar"></i><span>Analytics</span></div>
+        <div class="command-result" onclick="closeCommandPalette();showSubjectModal()"><i class="fas fa-plus-circle"></i><span>Add Subject</span></div>
+        <div class="command-result" onclick="closeCommandPalette();showTaskModal()"><i class="fas fa-plus-square"></i><span>Add Task</span></div>
+        <div class="command-result" onclick="closeCommandPalette();toggleDarkMode()"><i class="fas fa-moon"></i><span>Toggle Theme</span></div>
+        <div class="command-result" onclick="closeCommandPalette();logout()"><i class="fas fa-sign-out-alt"></i><span>Sign Out</span></div>
+    `;
+}
+
+function openCommandPalette(prefill) {
+    const palette = document.getElementById('command-palette');
+    palette.classList.remove('hidden');
+    const input = document.getElementById('command-input');
+    input.value = prefill || '';
+    input.focus();
+    handleCommand(input.value);
+}
+
+function closeCommandPalette() {
+    document.getElementById('command-palette').classList.add('hidden');
+}
+
+/* NOTIFICATIONS */
+function showNotifications() { showToast('Notifications coming soon!', 'info'); }
+
+/* SUBJECT MODAL */
 function showSubjectModal(subjectId) {
     const subject = subjectId ? Pages.subjects.find(s => s.subjectId === subjectId) : null;
     const isEdit = !!subject;
@@ -123,7 +164,7 @@ function showSubjectModal(subjectId) {
     showModal(isEdit ? 'Edit Subject' : 'Add New Subject', `
         <div class="form-group">
             <label>Subject Name</label>
-            <input type="text" id="modal-subject-name" value="${subject?.subjectName || ''}" placeholder="e.g., Mathematics" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;background:var(--bg);color:var(--text-primary);outline:none">
+            <input type="text" id="modal-subject-name" value="${subject?.subjectName || ''}" placeholder="e.g., Mathematics">
         </div>
         <div class="form-group">
             <label>Difficulty Level</label>
@@ -136,7 +177,7 @@ function showSubjectModal(subjectId) {
         </div>
         <div class="form-group">
             <label>Target Grade</label>
-            <input type="text" id="modal-subject-grade" value="${subject?.targetGrade || ''}" placeholder="e.g., A, B+, 90%" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;background:var(--bg);color:var(--text-primary);outline:none">
+            <input type="text" id="modal-subject-grade" value="${subject?.targetGrade || ''}" placeholder="e.g., A, B+, 90%">
         </div>
         <div class="form-group">
             <label>Color</label>
@@ -176,9 +217,7 @@ async function deleteSubject(id) {
     catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-/* ============================================
-   TASK MODAL
-============================================ */
+/* TASK MODAL */
 function showTaskModal(taskId) {
     const task = taskId ? Pages.tasks.find(t => t.taskId === taskId) : null;
     const isEdit = !!task;
@@ -186,7 +225,7 @@ function showTaskModal(taskId) {
     showModal(isEdit ? 'Edit Task' : 'Add New Task', `
         <div class="form-group">
             <label>Task Name</label>
-            <input type="text" id="modal-task-name" value="${task?.taskName || ''}" placeholder="e.g., Math Assignment 3" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;background:var(--bg);color:var(--text-primary);outline:none">
+            <input type="text" id="modal-task-name" value="${task?.taskName || ''}" placeholder="e.g., Math Assignment 3">
         </div>
         <div class="form-group">
             <label>Subject</label>
@@ -216,7 +255,7 @@ function showTaskModal(taskId) {
         </div>
         <div class="form-group">
             <label>Due Date</label>
-            <input type="datetime-local" id="modal-task-due" value="${task?.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : ''}" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:var(--radius);font-size:14px;font-family:inherit;background:var(--bg);color:var(--text-primary);outline:none">
+            <input type="datetime-local" id="modal-task-due" value="${task?.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : ''}">
         </div>
         <button class="btn-primary" onclick="saveTask(${isEdit ? `'${taskId}'` : 'null'})"><i class="fas fa-save"></i> ${isEdit ? 'Update Task' : 'Save Task'}</button>
     `);
@@ -260,9 +299,7 @@ async function deleteTask(taskId) {
     catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-/* ============================================
-   SCHEDULE HELPERS
-============================================ */
+/* SCHEDULE HELPERS */
 function updateHours(value) {
     document.getElementById('hours-display').textContent = value + 'h';
     const settings = JSON.parse(localStorage.getItem('studyflow_settings') || '{}');
@@ -271,22 +308,20 @@ function updateHours(value) {
     renderPage('schedule');
 }
 
-/* ============================================
-   AI MODAL
-============================================ */
+/* AI MODAL */
 function showAIModal() {
     const pending = Pages.tasks.filter(t => t.status !== 2).length;
     const overdue = Pages.tasks.filter(t => t.status !== 2 && t.dueDate < Date.now()).length;
     const urgent = Pages.tasks.filter(t => t.status !== 2 && t.dueDate > Date.now() && t.dueDate < Date.now() + 604800000).length;
 
     let insights = [];
-    if (overdue > 0) insights.push(`<div style="padding:10px 14px;background:var(--danger-50);border-radius:var(--radius-sm);font-size:13px;border-left:3px solid var(--danger)"><b>${overdue} overdue task(s)</b> — Catch up on these ASAP!</div>`);
-    if (urgent > 0) insights.push(`<div style="padding:10px 14px;background:var(--warning-50);border-radius:var(--radius-sm);font-size:13px;border-left:3px solid var(--warning)"><b>${urgent} task(s) due this week</b> — Plan your study sessions carefully.</div>`);
+    if (overdue > 0) insights.push(`<div style="padding:10px 14px;background:var(--danger-50);border-radius:var(--r-sm);font-size:13px;border-left:3px solid var(--danger)"><b>${overdue} overdue task(s)</b> — Catch up on these ASAP!</div>`);
+    if (urgent > 0) insights.push(`<div style="padding:10px 14px;background:var(--warning-50);border-radius:var(--r-sm);font-size:13px;border-left:3px solid var(--warning)"><b>${urgent} task(s) due this week</b> — Plan your study sessions carefully.</div>`);
     if (Pages.subjects.length > 0) {
         const hardest = Pages.subjects.reduce((a, b) => (a.difficultyLevel || 2) > (b.difficultyLevel || 2) ? a : b);
-        insights.push(`<div style="padding:10px 14px;background:var(--primary-50);border-radius:var(--radius-sm);font-size:13px;border-left:3px solid var(--primary)"><b>${hardest.subjectName}</b> is your most challenging subject — dedicate more study time.</div>`);
+        insights.push(`<div style="padding:10px 14px;background:var(--primary-50);border-radius:var(--r-sm);font-size:13px;border-left:3px solid var(--primary)"><b>${hardest.subjectName}</b> is your most challenging subject — dedicate more study time.</div>`);
     }
-    if (insights.length === 0) insights.push(`<div style="padding:10px 14px;background:var(--success-50);border-radius:var(--radius-sm);font-size:13px;border-left:3px solid var(--success)">You're doing great! Keep up the momentum.</div>`);
+    if (insights.length === 0) insights.push(`<div style="padding:10px 14px;background:var(--success-50);border-radius:var(--r-sm);font-size:13px;border-left:3px solid var(--success)">You're doing great! Keep up the momentum.</div>`);
 
     showModal('AI Study Insights', `
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
@@ -299,18 +334,35 @@ function showAIModal() {
     `);
 }
 
-/* ============================================
-   NOTIFICATIONS (placeholder)
-============================================ */
-function showNotifications() { showToast('Notifications coming soon!', 'info'); }
-
-/* ============================================
-   INIT
-============================================ */
+/* INIT */
 document.addEventListener('DOMContentLoaded', () => {
+    // Theme
     const savedTheme = localStorage.getItem('studyflow_theme');
     if (savedTheme === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
-        document.getElementById('theme-icon').className = 'fas fa-sun';
+        const icon = document.getElementById('theme-icon');
+        if (icon) icon.className = 'fas fa-sun';
     }
+
+    // Command palette keyboard shortcut
+    document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            openCommandPalette();
+        }
+        if (e.key === 'Escape') {
+            closeCommandPalette();
+            closeModal();
+            document.getElementById('user-menu')?.classList.add('hidden');
+        }
+    });
+
+    // Close user menu on outside click
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('user-menu');
+        const trigger = document.querySelector('.topbar-user');
+        if (menu && !menu.contains(e.target) && !trigger?.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
 });

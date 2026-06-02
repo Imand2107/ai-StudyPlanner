@@ -1,8 +1,5 @@
-// Page renderers – Premium StudyFlow
 const Pages = {
-    subjects: [],
-    tasks: [],
-    sessions: [],
+    subjects: [], tasks: [], sessions: [],
 
     async loadData() {
         if (!currentUser) return;
@@ -14,6 +11,15 @@ const Pages = {
     getUserName() {
         const u = JSON.parse(localStorage.getItem('studyflow_user') || '{}');
         return u.name || currentUser?.email?.split('@')[0] || 'Student';
+    },
+
+    getUserInitial() {
+        return this.getUserName().charAt(0).toUpperCase();
+    },
+
+    getUserEmail() {
+        const u = JSON.parse(localStorage.getItem('studyflow_user') || '{}');
+        return u.email || currentUser?.email || '';
     },
 
     getGreeting() {
@@ -79,9 +85,6 @@ const Pages = {
         return { level: lvl, currentXP: xp % 100, nextXP: 100 };
     },
 
-    /* ============================================
-       DASHBOARD
-    ============================================ */
     renderDashboard() {
         const completedTasks = this.tasks.filter(t => t.status === 2).length;
         const totalMinutes = this.sessions.reduce((s, x) => s + (x.durationMinutes || 0), 0);
@@ -99,15 +102,13 @@ const Pages = {
         const overdueTasks = this.tasks.filter(t => t.status !== 2 && t.dueDate < Date.now());
 
         return `
-            <!-- Greeting -->
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
                 <div>
-                    <div style="font-size:28px;font-weight:800;letter-spacing:-0.5px">${this.getGreeting()}, ${this.getUserName()} 👋</div>
-                    <div style="font-size:14px;color:var(--text-muted);margin-top:4px;font-style:italic">"${this.getMotivationalQuote()}"</div>
+                    <div style="font-size:28px;font-weight:800;letter-spacing:-0.5px">${this.getGreeting()}, ${this.getUserName()}</div>
+                    <div style="font-size:14px;color:var(--text-3);margin-top:4px;font-style:italic">"${this.getMotivationalQuote()}"</div>
                 </div>
             </div>
 
-            <!-- Stats Cards -->
             <div class="stats-grid">
                 <div class="stat-card purple">
                     <div class="stat-header">
@@ -145,23 +146,20 @@ const Pages = {
                 </div>
             </div>
 
-            <!-- AI Assistant Card -->
             <div class="ai-card">
                 <div class="ai-card-content">
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
                         <i class="fas fa-robot" style="font-size:28px"></i>
                         <h2>AI Study Coach</h2>
                     </div>
-                    <p>Let me analyze your workload and create the perfect study plan. I'll suggest priorities and predict completion dates based on your habits.</p>
+                    <p>Let me analyze your workload and create the perfect study plan.</p>
                     <div class="ai-actions">
                         <button class="ai-btn" onclick="navigateTo('schedule')"><i class="fas fa-calendar-alt"></i> Generate Schedule</button>
                         <button class="ai-btn" onclick="showAIModal()"><i class="fas fa-lightbulb"></i> Get Insights</button>
-                        <button class="ai-btn" onclick="showToast('AI analysis coming soon!','info')"><i class="fas fa-chart-line"></i> Predict Deadlines</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
             <div class="quick-actions">
                 <div class="action-card" onclick="navigateTo('schedule')">
                     <div class="icon" style="background:var(--primary-50);color:var(--primary)"><i class="fas fa-calendar-alt"></i></div>
@@ -181,7 +179,6 @@ const Pages = {
                 </div>
             </div>
 
-            <!-- XP Bar -->
             <div class="xp-bar-container">
                 <div class="xp-header">
                     <div class="xp-level">
@@ -191,12 +188,11 @@ const Pages = {
                             <div class="level-xp">${xp} XP earned</div>
                         </div>
                     </div>
-                    <div style="font-size:13px;color:var(--text-muted)">${currentXP}/${nextXP} XP to next level</div>
+                    <div style="font-size:13px;color:var(--text-3)">${currentXP}/${nextXP} XP to next level</div>
                 </div>
                 <div class="xp-bar"><div class="xp-bar-fill" style="width:${currentXP}%"></div></div>
             </div>
 
-            <!-- Two columns: Upcoming + Alerts -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
                 <div>
                     <div class="section-header"><h2>Upcoming Deadlines</h2></div>
@@ -216,9 +212,6 @@ const Pages = {
         `;
     },
 
-    /* ============================================
-       SUBJECTS
-    ============================================ */
     renderSubjects() {
         return `
             <div class="section-header">
@@ -234,7 +227,7 @@ const Pages = {
                             <div class="item-subtitle">${this.getDifficultyText(s.difficultyLevel)} · Target: ${s.targetGrade || 'N/A'}</div>
                         </div>
                         <div style="text-align:right">
-                            <div style="font-size:12px;color:var(--text-muted)">${this.tasks.filter(t => t.subjectId === s.subjectId && t.status !== 2).length} tasks</div>
+                            <div style="font-size:12px;color:var(--text-3)">${this.tasks.filter(t => t.subjectId === s.subjectId && t.status !== 2).length} tasks</div>
                         </div>
                         <div class="item-actions">
                             <button onclick="event.stopPropagation();deleteSubject('${s.subjectId}')" class="delete"><i class="fas fa-trash"></i></button>
@@ -246,9 +239,6 @@ const Pages = {
         `;
     },
 
-    /* ============================================
-       TASKS (Kanban)
-    ============================================ */
     renderTasks(filter = 'kanban') {
         if (filter === 'kanban') return this.renderKanban();
         let filtered = [...this.tasks];
@@ -314,11 +304,11 @@ const Pages = {
             <div class="kanban-board">
                 <div class="kanban-column" id="col-todo">
                     <div class="kanban-header">
-                        <div class="dot" style="background:var(--text-muted)"></div>
+                        <div class="dot" style="background:var(--text-3)"></div>
                         <h3>To Do</h3>
                         <span class="count">${todo.length}</span>
                     </div>
-                    ${todo.length > 0 ? todo.map(renderCard).join('') : '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No tasks</div>'}
+                    ${todo.length > 0 ? todo.map(renderCard).join('') : '<div style="text-align:center;padding:20px;color:var(--text-3);font-size:13px">No tasks</div>'}
                 </div>
                 <div class="kanban-column" id="col-progress">
                     <div class="kanban-header">
@@ -326,7 +316,7 @@ const Pages = {
                         <h3>In Progress</h3>
                         <span class="count">${inProgress.length}</span>
                     </div>
-                    ${inProgress.length > 0 ? inProgress.map(renderCard).join('') : '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No tasks</div>'}
+                    ${inProgress.length > 0 ? inProgress.map(renderCard).join('') : '<div style="text-align:center;padding:20px;color:var(--text-3);font-size:13px">No tasks</div>'}
                 </div>
                 <div class="kanban-column" id="col-done">
                     <div class="kanban-header">
@@ -334,7 +324,7 @@ const Pages = {
                         <h3>Completed</h3>
                         <span class="count">${done.length}</span>
                     </div>
-                    ${done.length > 0 ? done.slice(0, 10).map(renderCard).join('') : '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No tasks</div>'}
+                    ${done.length > 0 ? done.slice(0, 10).map(renderCard).join('') : '<div style="text-align:center;padding:20px;color:var(--text-3);font-size:13px">No tasks</div>'}
                 </div>
             </div>
         `;
@@ -361,7 +351,7 @@ const Pages = {
                     </div>
                 </div>
                 <span class="item-badge badge-${statusClass}">${this.getStatusText(task.status)}</span>
-                <span style="font-size:12px;color:${isOverdue ? 'var(--danger)' : 'var(--text-muted)'};white-space:nowrap;font-weight:500">${this.formatDueDate(task.dueDate)}</span>
+                <span style="font-size:12px;color:${isOverdue ? 'var(--danger)' : 'var(--text-3)'};white-space:nowrap;font-weight:500">${this.formatDueDate(task.dueDate)}</span>
                 <div class="item-actions">
                     <button onclick="event.stopPropagation();showTaskModal('${task.taskId}')"><i class="fas fa-edit"></i></button>
                     <button onclick="event.stopPropagation();deleteTask('${task.taskId}')" class="delete"><i class="fas fa-trash"></i></button>
@@ -370,9 +360,6 @@ const Pages = {
         `;
     },
 
-    /* ============================================
-       SCHEDULE
-    ============================================ */
     renderSchedule() {
         const settings = JSON.parse(localStorage.getItem('studyflow_settings') || '{}');
         const hours = settings.availableHours || 4;
@@ -400,7 +387,7 @@ const Pages = {
                 </div>
             </div>
 
-            ${overload ? `<div style="background:var(--warning-50);color:var(--warning);padding:14px 18px;border-radius:var(--radius);margin-bottom:20px;font-size:13px;font-weight:500;border:1px solid rgba(245,158,11,0.15)"><i class="fas fa-exclamation-triangle"></i> ${overload}</div>` : ''}
+            ${overload ? `<div style="background:var(--warning-50);color:var(--warning);padding:14px 18px;border-radius:var(--r);margin-bottom:20px;font-size:13px;font-weight:500;border:1px solid rgba(245,158,11,0.15)"><i class="fas fa-exclamation-triangle"></i> ${overload}</div>` : ''}
 
             <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px">
                 <div>
@@ -432,7 +419,7 @@ const Pages = {
                                         </div>
                                         <div class="slot-duration">${s.duration} min</div>
                                     </div>
-                                `).join('') : '<div style="font-size:12px;color:var(--text-muted);padding:6px 0">Rest day</div>'}
+                                `).join('') : '<div style="font-size:12px;color:var(--text-3);padding:6px 0">Rest day</div>'}
                             </div>
                         `).join('')}
                     </div>
@@ -441,9 +428,6 @@ const Pages = {
         `;
     },
 
-    /* ============================================
-       TIMER
-    ============================================ */
     renderTimer() {
         PomodoroTimer.init();
         return `
@@ -469,9 +453,6 @@ const Pages = {
         `;
     },
 
-    /* ============================================
-       ANALYTICS
-    ============================================ */
     renderAnalytics() {
         const totalMin = this.sessions.reduce((s, x) => s + (x.durationMinutes || 0), 0);
         const done = this.tasks.filter(t => t.status === 2).length;
@@ -542,7 +523,6 @@ const Pages = {
                 </div>
             </div>
 
-            <!-- Achievements -->
             <div class="section-header"><h2>Achievements</h2></div>
             <div class="achievements-grid">
                 ${this.renderAchievement('🎯', 'First Task', 'Complete your first task', done >= 1)}
