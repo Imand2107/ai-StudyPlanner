@@ -99,40 +99,39 @@
             </div>
         </aside>
 
-        <!-- Content -->
-        <div class="content-wrapper">
-            <!-- Topbar -->
-            <header class="topbar">
-                <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-                <div class="topbar-search">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search subjects, tasks..." id="global-search" oninput="handleSearch(this.value)">
+        <!-- Topbar -->
+        <header class="topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+            <div class="topbar-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search subjects, tasks..." id="global-search" oninput="handleSearch(this.value)">
+            </div>
+            <div class="topbar-actions">
+                <button class="btn-icon" onclick="toggleDarkMode()" title="Toggle theme"><i class="fas fa-moon" id="theme-icon"></i></button>
+                <button class="btn-icon notification-btn" onclick="showNotifications()">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notification-badge">0</span>
+                </button>
+                <div class="topbar-user" onclick="toggleUserMenu()">
+                    <div class="user-avatar-sm" id="topbar-avatar">I</div>
+                    <i class="fas fa-chevron-down" style="font-size:10px;color:var(--text-muted)"></i>
                 </div>
-                <div class="topbar-actions">
-                    <button class="btn-icon" onclick="toggleDarkMode()" title="Toggle theme"><i class="fas fa-moon" id="theme-icon"></i></button>
-                    <button class="btn-icon notification-btn" onclick="showNotifications()">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge" id="notification-badge">0</span>
-                    </button>
-                    <div class="topbar-user" onclick="toggleUserMenu()">
-                        <div class="user-avatar-sm" id="topbar-avatar">I</div>
-                        <i class="fas fa-chevron-down" style="font-size:10px;color:var(--text-muted)"></i>
+                <div id="user-menu" class="user-menu hidden">
+                    <div class="user-menu-header">
+                        <div class="user-avatar-sm" style="width:48px;height:48px;font-size:18px" id="menu-avatar">I</div>
+                        <div><div style="font-weight:700" id="menu-name">User</div><div style="font-size:12px;color:var(--text-muted)" id="menu-email">user@email.com</div></div>
                     </div>
-                    <div id="user-menu" class="user-menu hidden">
-                        <div class="user-menu-header">
-                            <div class="user-avatar-sm" style="width:48px;height:48px;font-size:18px" id="menu-avatar">I</div>
-                            <div><div style="font-weight:700" id="menu-name">User</div><div style="font-size:12px;color:var(--text-muted)" id="menu-email">user@email.com</div></div>
-                        </div>
-                        <div class="user-menu-divider"></div>
-                        <a class="user-menu-item" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> Toggle Theme</a>
-                        <a class="user-menu-item" onclick="showNotifications()"><i class="fas fa-bell"></i> Notifications</a>
-                        <div class="user-menu-divider"></div>
-                        <a class="user-menu-item danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
-                    </div>
+                    <div class="user-menu-divider"></div>
+                    <a class="user-menu-item" onclick="toggleDarkMode()"><i class="fas fa-moon"></i> Toggle Theme</a>
+                    <a class="user-menu-item" onclick="showNotifications()"><i class="fas fa-bell"></i> Notifications</a>
+                    <div class="user-menu-divider"></div>
+                    <a class="user-menu-item danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
                 </div>
-            </header>
+            </div>
+        </header>
 
-            <!-- Page -->
+        <!-- Page -->
+        <div class="content-wrapper">
             <main class="page-container" id="page-container"></main>
         </div>
     </div>
